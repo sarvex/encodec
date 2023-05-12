@@ -59,7 +59,7 @@ class LMModel(nn.Module):
 
         """
         B, K, T = indices.shape
-        input_ = sum([self.emb[k](indices[:, k]) for k in range(K)])
+        input_ = sum(self.emb[k](indices[:, k]) for k in range(K))
         out, states, offset = self.transformer(input_, states, offset)
         logits = torch.stack([self.linears[k](out) for k in range(K)], dim=1).permute(0, 3, 1, 2)
         return torch.softmax(logits, dim=1), states, offset
@@ -108,9 +108,7 @@ class EncodecModel(nn.Module):
 
     @property
     def segment_length(self) -> tp.Optional[int]:
-        if self.segment is None:
-            return None
-        return int(self.segment * self.sample_rate)
+        return None if self.segment is None else int(self.segment * self.sample_rate)
 
     @property
     def segment_stride(self) -> tp.Optional[int]:
@@ -234,7 +232,7 @@ class EncodecModel(nn.Module):
             n_q=n_q,
             bins=1024,
         )
-        model = EncodecModel(
+        return EncodecModel(
             encoder,
             decoder,
             quantizer,
@@ -245,7 +243,6 @@ class EncodecModel(nn.Module):
             segment=segment,
             name=name,
         )
-        return model
 
     @staticmethod
     def _get_pretrained(checkpoint_name: str, repository: tp.Optional[Path] = None):
@@ -267,7 +264,6 @@ class EncodecModel(nn.Module):
         if repository:
             assert pretrained
         target_bandwidths = [1.5, 3., 6, 12., 24.]
-        checkpoint_name = 'encodec_24khz-d7cc33bc.th'
         sample_rate = 24_000
         channels = 1
         model = EncodecModel._get_model(
@@ -275,6 +271,7 @@ class EncodecModel(nn.Module):
             causal=True, model_norm='weight_norm', audio_normalize=False,
             name='encodec_24khz' if pretrained else 'unset')
         if pretrained:
+            checkpoint_name = 'encodec_24khz-d7cc33bc.th'
             state_dict = EncodecModel._get_pretrained(checkpoint_name, repository)
             model.load_state_dict(state_dict)
         model.eval()
@@ -287,7 +284,6 @@ class EncodecModel(nn.Module):
         if repository:
             assert pretrained
         target_bandwidths = [3., 6., 12., 24.]
-        checkpoint_name = 'encodec_48khz-7e698e3e.th'
         sample_rate = 48_000
         channels = 2
         model = EncodecModel._get_model(
@@ -295,6 +291,7 @@ class EncodecModel(nn.Module):
             causal=False, model_norm='time_group_norm', audio_normalize=True,
             segment=1., name='encodec_48khz' if pretrained else 'unset')
         if pretrained:
+            checkpoint_name = 'encodec_48khz-7e698e3e.th'
             state_dict = EncodecModel._get_pretrained(checkpoint_name, repository)
             model.load_state_dict(state_dict)
         model.eval()

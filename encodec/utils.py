@@ -66,10 +66,10 @@ def _check_checksum(path: Path, checksum: str):
     sha = sha256()
     with open(path, 'rb') as file:
         while True:
-            buf = file.read(2**20)
-            if not buf:
+            if buf := file.read(2**20):
+                sha.update(buf)
+            else:
                 break
-            sha.update(buf)
     actual_checksum = sha.hexdigest()[:len(checksum)]
     if actual_checksum != checksum:
         raise RuntimeError(f'Invalid checksum for file {path}, '
@@ -96,8 +96,5 @@ def save_audio(wav: torch.Tensor, path: tp.Union[Path, str],
                sample_rate: int, rescale: bool = False):
     limit = 0.99
     mx = wav.abs().max()
-    if rescale:
-        wav = wav * min(limit / mx, 1)
-    else:
-        wav = wav.clamp(-limit, limit)
+    wav = wav * min(limit / mx, 1) if rescale else wav.clamp(-limit, limit)
     torchaudio.save(str(path), wav, sample_rate=sample_rate, encoding='PCM_S', bits_per_sample=16)

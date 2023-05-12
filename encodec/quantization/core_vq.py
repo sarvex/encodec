@@ -179,15 +179,13 @@ class EuclideanCodebook(nn.Module):
             - 2 * x @ embed
             + embed.pow(2).sum(0, keepdim=True)
         )
-        embed_ind = dist.max(dim=-1).indices
-        return embed_ind
+        return dist.max(dim=-1).indices
 
     def postprocess_emb(self, embed_ind, shape):
         return embed_ind.view(*shape[:-1])
 
     def dequantize(self, embed_ind):
-        quantize = F.embedding(embed_ind, self.embed)
-        return quantize
+        return F.embedding(embed_ind, self.embed)
 
     def encode(self, x):
         shape = x.shape
@@ -200,8 +198,7 @@ class EuclideanCodebook(nn.Module):
         return embed_ind
 
     def decode(self, embed_ind):
-        quantize = self.dequantize(embed_ind)
-        return quantize
+        return self.dequantize(embed_ind)
 
     def forward(self, x):
         shape, dtype = x.shape, x.dtype
@@ -282,8 +279,7 @@ class VectorQuantization(nn.Module):
     def encode(self, x):
         x = rearrange(x, "b d n -> b n d")
         x = self.project_in(x)
-        embed_in = self._codebook.encode(x)
-        return embed_in
+        return self._codebook.encode(x)
 
     def decode(self, embed_ind):
         quantize = self._codebook.decode(embed_ind)
@@ -355,8 +351,7 @@ class ResidualVectorQuantization(nn.Module):
             quantized = layer.decode(indices)
             residual = residual - quantized
             all_indices.append(indices)
-        out_indices = torch.stack(all_indices)
-        return out_indices
+        return torch.stack(all_indices)
 
     def decode(self, q_indices: torch.Tensor) -> torch.Tensor:
         quantized_out = torch.tensor(0.0, device=q_indices.device)

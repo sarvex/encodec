@@ -106,11 +106,9 @@ class ResidualVectorQuantizer(nn.Module):
         and returns indices for each quantizer.
         """
         n_q = self.get_num_quantizers_for_bandwidth(frame_rate, bandwidth)
-        codes = self.vq.encode(x, n_q=n_q)
-        return codes
+        return self.vq.encode(x, n_q=n_q)
 
     def decode(self, codes: torch.Tensor) -> torch.Tensor:
         """Decode the given codes to the quantized representation.
         """
-        quantized = self.vq.decode(codes)
-        return quantized
+        return self.vq.decode(codes)

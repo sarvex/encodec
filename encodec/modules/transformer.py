@@ -86,13 +86,9 @@ class StreamingTransformerEncoder(nn.Module):
         activation: tp.Any = F.gelu if gelu else F.relu
 
         self.norm_in: nn.Module
-        if norm_in:
-            self.norm_in = nn.LayerNorm(dim)
-        else:
-            self.norm_in = nn.Identity()
-
+        self.norm_in = nn.LayerNorm(dim) if norm_in else nn.Identity()
         self.layers = nn.ModuleList()
-        for idx in range(num_layers):
+        for _ in range(num_layers):
             self.layers.append(
                 StreamingTransformerEncoderLayer(
                     dim, num_heads, hidden_dim,
